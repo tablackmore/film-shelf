@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Tom's Film Shelf</title>
+<title>Rock Road Film Shelf</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Film Shelf">
+<meta name="apple-mobile-web-app-title" content="Rock Road">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121011" media="(prefers-color-scheme: dark)">
@@ -107,7 +107,7 @@ select,.btn{font:500 15px Inter,sans-serif;min-height:46px;padding:0 14px;border
 <body>
 <div class="statusfill" aria-hidden="true"></div>
 <header class="wrap">
-<h1>Tom's Film Shelf</h1>
+<h1>Rock Road Film Shelf</h1>
 <div class="install" id="install" hidden><p>📲 <b>Install on iPhone:</b> tap the Share button <span aria-hidden="true">⎋</span>, then <b>Add to Home Screen</b>. It opens full screen and works offline.</p><button type="button" id="installx" aria-label="Dismiss">×</button></div>
 <p class="sub" id="sub">Every title from your handwritten list, ready to browse.</p>
 </header>
@@ -129,6 +129,7 @@ select,.btn{font:500 15px Inter,sans-serif;min-height:46px;padding:0 14px;border
 <main class="wrap">
 <p class="count" id="count"></p>
 <div class="grid" id="grid"></div>
+<p class="foot" id="offline" hidden></p>
 <p class="foot">Scores are approximate and can drift. Tap a title, then IMDb or Rotten Tomatoes for the live score. Poster and cover art comes from Wikipedia and belongs to the films' studios and distributors. Critics' summaries are written fresh, not copied from Rotten Tomatoes. Where your list didn't say which version you meant, the most likely one is shown with a note.</p>
 </main>
 <div class="scrim" id="scrim"></div>
@@ -329,7 +330,17 @@ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform=="Ma
 let dismissed=false;try{dismissed=localStorage.getItem("fs-install-x")=="1"}catch(e){}
 if(ios&&!standalone&&!dismissed)$("install").hidden=false;
 $("installx").onclick=()=>{$("install").hidden=true;try{localStorage.setItem("fs-install-x","1")}catch(e){}};
-if("serviceWorker" in navigator&&location.protocol=="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator&&isSecureContext)navigator.serviceWorker.register("sw.js").catch(()=>{});
+// offline status: count what the service worker has saved
+const offlineStatus=async()=>{try{
+  if(!("caches" in window))return;
+  const ks=await caches.keys(),k=ks.find(x=>x.startsWith("rrfs-"));if(!k)return;
+  const n=(await (await caches.open(k)).keys()).filter(r=>/wikimedia\.org/.test(r.url)).length,tot=Object.keys(P).length;
+  const el=$("offline");el.hidden=false;
+  el.textContent=n>=tot?`✓ Saved for offline: all ${F.length} titles and ${tot} posters.`:`Saving for offline… ${n} of ${tot} posters.`;
+  if(n<tot)setTimeout(offlineStatus,2000);
+}catch(e){}};
+if("serviceWorker" in navigator)navigator.serviceWorker.ready.then(offlineStatus);
 }
 </script>
 </body>
