@@ -334,7 +334,7 @@ if("serviceWorker" in navigator&&isSecureContext)navigator.serviceWorker.registe
 // offline status: count what the service worker has saved
 const offlineStatus=async()=>{try{
   if(!("caches" in window))return;
-  const ks=await caches.keys(),k=ks.find(x=>x.startsWith("rrfs-"));if(!k)return;
+  const ks=await caches.keys(),k=ks.find(x=>x.startsWith("rrfs-"));if(!k){setTimeout(offlineStatus,2000);return;}
   const n=(await (await caches.open(k)).keys()).filter(r=>/wikimedia\.org/.test(r.url)).length,tot=Object.keys(P).length;
   const el=$("offline");el.hidden=false;
   el.textContent=n>=tot?`✓ Saved for offline: all ${F.length} titles and ${tot} posters.`:`Saving for offline… ${n} of ${tot} posters.`;
